@@ -1,0 +1,15 @@
+{
+  "name": "thinkollect",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Collect your thoughts without losing flow.",
+  "author": "Krishna (ThinknBuild)",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter mobile start",
+    "android": "pnpm --filter mobile android",
+    "ios": "pnpm --filter mobile ios"
+  }
+}
