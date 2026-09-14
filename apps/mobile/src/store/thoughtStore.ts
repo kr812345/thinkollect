@@ -5,6 +5,8 @@ import {
   getAllThoughts,
   getUnsyncedCount,
   getTotalCount,
+  deleteThoughts,
+  updateThought,
 } from '../db/local'
 import { syncPendingThoughts } from '../lib/sync'
 import type { Thought, NewThought } from '../types'
@@ -19,6 +21,8 @@ interface ThoughtStore {
   loadThoughts: () => void
   addThought: (input: NewThought) => Promise<void>
   triggerSync: () => Promise<void>
+  removeThoughts: (ids: string[]) => Promise<void>
+  editThought: (id: string, newContent: string) => Promise<void>
 }
 
 export const useThoughtStore = create<ThoughtStore>((set, get) => ({
@@ -44,13 +48,21 @@ export const useThoughtStore = create<ThoughtStore>((set, get) => ({
       captured_at: Date.now(),
     }
 
-    // Save locally — synchronous, instant
     saveThought(thought)
-
-    // Refresh state from DB
     get().loadThoughts()
+    get().triggerSync()
+  },
 
-    // Fire sync in background — no await on UI thread
+  removeThoughts: async (ids: string[]) => {
+    deleteThoughts(ids)
+    get().loadThoughts()
+    // Ideally we'd also delete from Supabase or queue deletions
+    // For now we just remove locally based on user's simple request
+  },
+
+  editThought: async (id: string, newContent: string) => {
+    updateThought(id, newContent.trim())
+    get().loadThoughts()
     get().triggerSync()
   },
 
@@ -61,7 +73,6 @@ export const useThoughtStore = create<ThoughtStore>((set, get) => ({
       await syncPendingThoughts()
     } finally {
       set({ isSyncing: false })
-      // Refresh counts after sync
       get().loadThoughts()
     }
   },

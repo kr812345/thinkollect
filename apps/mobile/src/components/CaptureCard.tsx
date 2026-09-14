@@ -9,6 +9,7 @@ import {
 } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { useThoughtStore } from '../store/thoughtStore'
+import { useThemeStore, getThemeColors } from '../store/themeStore'
 
 const MAX_LENGTH = 2000
 
@@ -16,18 +17,19 @@ export default function CaptureCard() {
   const [text, setText] = useState('')
   const inputRef = useRef<TextInput>(null)
   const addThought = useThoughtStore((s) => s.addThought)
+  
+  const theme = useThemeStore((s) => s.theme)
+  const colors = getThemeColors(theme)
 
   const handleDump = useCallback(async () => {
     const trimmed = text.trim()
     if (!trimmed) return
 
-    // Instant tactile feedback
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
     setText('')
     inputRef.current?.focus()
 
-    // Save — local write is synchronous so it's instant
     await addThought({ content: trimmed, tags: [] })
   }, [text, addThought])
 
@@ -35,27 +37,27 @@ export default function CaptureCard() {
   const isOverLimit = remaining < 0
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <TextInput
         ref={inputRef}
-        style={styles.input}
+        style={[styles.input, { color: colors.text }]}
         value={text}
         onChangeText={setText}
         placeholder="What's the thought?"
-        placeholderTextColor="#333333"
+        placeholderTextColor={colors.textDim}
         multiline
         autoFocus
         autoCorrect={false}
         autoCapitalize="sentences"
         maxLength={MAX_LENGTH + 50}
-        selectionColor="#f5f5f5"
+        selectionColor={colors.tint}
         returnKeyType="default"
         blurOnSubmit={false}
       />
 
       <View style={styles.footer}>
         {text.length > 0 && (
-          <Text style={[styles.counter, isOverLimit && styles.counterOver]}>
+          <Text style={[styles.counter, { color: colors.textDim }, isOverLimit && { color: colors.danger }]}>
             {remaining}
           </Text>
         )}
@@ -64,13 +66,23 @@ export default function CaptureCard() {
           disabled={!text.trim() || isOverLimit}
           style={({ pressed }) => [
             styles.dumpBtn,
-            (!text.trim() || isOverLimit) && styles.dumpBtnDisabled,
-            pressed && styles.dumpBtnPressed,
+            { borderColor: colors.text },
+            (!text.trim() || isOverLimit) && { borderColor: colors.border },
+            pressed && { backgroundColor: colors.text },
           ]}
           accessibilityLabel="Dump thought"
           accessibilityRole="button"
         >
-          <Text style={styles.dumpBtnText}>dump</Text>
+          {({ pressed }) => (
+            <Text style={[
+              styles.dumpBtnText,
+              { color: colors.text },
+              (!text.trim() || isOverLimit) && { color: colors.textDim },
+              pressed && { color: colors.bg }
+            ]}>
+              dump
+            </Text>
+          )}
         </Pressable>
       </View>
     </View>
@@ -79,16 +91,13 @@ export default function CaptureCard() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#0a0a0a',
     borderWidth: 1,
-    borderColor: '#1f1f1f',
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 16,
     minHeight: 140,
   },
   input: {
-    color: '#f5f5f5',
     fontSize: 17,
     lineHeight: 26,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -103,28 +112,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   counter: {
-    color: '#3a3a3a',
     fontSize: 12,
     fontVariant: ['tabular-nums'],
-  },
-  counterOver: {
-    color: '#ef4444',
   },
   dumpBtn: {
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#f5f5f5',
     borderRadius: 6,
   },
-  dumpBtnDisabled: {
-    borderColor: '#2a2a2a',
-  },
-  dumpBtnPressed: {
-    backgroundColor: '#f5f5f5',
-  },
   dumpBtnText: {
-    color: '#f5f5f5',
     fontSize: 13,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     letterSpacing: 0.5,

@@ -162,3 +162,33 @@ export function getTotalCount(): number {
     `SELECT COUNT(*) as count FROM thoughts`
   ))?.count ?? 0
 }
+
+// Delete thoughts by IDs
+export function deleteThoughts(ids: string[]): void {
+  if (ids.length === 0) return
+  if (Platform.OS === 'web') {
+    webThoughts = webThoughts.filter(t => !ids.includes(t.id))
+    saveWebDb()
+    return
+  }
+  const db = getDb()
+  const placeholders = ids.map(() => '?').join(', ')
+  db.runSync(`DELETE FROM thoughts WHERE id IN (${placeholders})`, ...ids)
+}
+
+// Update a thought's content
+export function updateThought(id: string, content: string): void {
+  if (Platform.OS === 'web') {
+    webThoughts = webThoughts.map(t => 
+      t.id === id ? { ...t, content, synced: 0, synced_at: null } : t
+    )
+    saveWebDb()
+    return
+  }
+  const db = getDb()
+  db.runSync(
+    `UPDATE thoughts SET content = ?, synced = 0, synced_at = NULL WHERE id = ?`,
+    content,
+    id
+  )
+}
