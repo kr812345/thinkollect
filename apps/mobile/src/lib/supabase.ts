@@ -7,8 +7,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('[supabase] EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY is not set. Sync will be disabled.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false }, // No auth needed — anon key + RLS handles it
-})
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } })
+  : null as any
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
