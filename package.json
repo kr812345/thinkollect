@@ -11,5 +11,8 @@
     "dev": "pnpm --filter mobile start",
     "android": "pnpm --filter mobile android",
     "ios": "pnpm --filter mobile ios"
+  },
+  "devDependencies": {
+    "eas-cli": "^24.3.0"
   }
 }
