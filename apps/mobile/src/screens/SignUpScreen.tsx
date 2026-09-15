@@ -1,85 +1,111 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, SafeAreaView } from 'react-native'
-import { supabase } from '../lib/supabase'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuthStore } from '../store/authStore'
 import { useThemeStore, getThemeColors } from '../store/themeStore'
 
 export default function SignUpScreen({ navigation }: any) {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const theme = useThemeStore((s) => s.theme)
   const colors = getThemeColors(theme)
+  const signUp = useAuthStore((s) => s.signUp)
 
   const handleSignUp = async () => {
-    if (!username || !password) {
-      Alert.alert('Error', 'Please enter both username and password')
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password')
       return
     }
 
     setLoading(true)
-    const email = `${username.trim()}@thinkollect.app`
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password
-    })
-    setLoading(false)
-
-    if (error) {
-      Alert.alert('Sign Up Error', error.message)
-    } else {
-      Alert.alert('Success', 'Account created! You are now signed in.')
+    try {
+      await signUp(email.trim(), password)
+      // On success, state updates and navigation changes automatically if session is set.
+    } catch (error: any) {
+      Alert.alert('Sign Up Error', error.message || 'An error occurred')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.text }]}>Sign Up</Text>
-        
-        <TextInput
-          style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-          placeholder="Choose a Username"
-          placeholderTextColor={colors.textMuted}
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <TextInput
-          style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-          placeholder="Choose a Password"
-          placeholderTextColor={colors.textMuted}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        
-        <TouchableOpacity 
-          style={[styles.button, { backgroundColor: colors.tint }]} 
-          onPress={handleSignUp}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign Up</Text>
-          )}
-        </TouchableOpacity>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+        <View style={styles.content}>
+          <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Join Thinkollect today</Text>
+          
+          <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.icon} />
+            <TextInput
+              style={[styles.input, { color: colors.text }]}
+              placeholder="Email"
+              placeholderTextColor={colors.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoCorrect={false}
+            />
+          </View>
 
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.linkContainer}>
-          <Text style={[styles.link, { color: colors.tint }]}>Already have an account? Sign in</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.icon} />
+            <TextInput
+              style={[styles.input, { color: colors.text }]}
+              placeholder="Password"
+              placeholderTextColor={colors.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: colors.tint }]} 
+            onPress={handleSignUp}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign Up</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.linkContainer}>
+            <Text style={[styles.link, { color: colors.tint }]}>Already have an account? Sign in</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center' },
-  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 30, textAlign: 'center' },
-  input: { borderWidth: 1, borderRadius: 8, padding: 15, marginBottom: 15, fontSize: 16 },
-  button: { padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  linkContainer: { marginTop: 20, alignItems: 'center' },
-  link: { fontSize: 16 },
+  container: { flex: 1 },
+  content: { flex: 1, padding: 24, justifyContent: 'center' },
+  title: { fontSize: 36, fontWeight: '800', marginBottom: 8, letterSpacing: -0.5 },
+  subtitle: { fontSize: 16, marginBottom: 40, fontWeight: '500' },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+  },
+  icon: { marginRight: 12 },
+  input: { flex: 1, fontSize: 16 },
+  eyeIcon: { padding: 4 },
+  button: { height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5 },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  linkContainer: { marginTop: 24, alignItems: 'center' },
+  link: { fontSize: 16, fontWeight: '600' },
 })

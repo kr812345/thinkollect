@@ -198,7 +198,7 @@ export default function HomeScreen({ navigation }: Props) {
               style={[styles.modalOption, { borderBottomColor: colors.border }]}
               onPress={() => {
                 setSettingsVisible(false)
-                import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut())
+                useAuthStore.getState().logout()
               }}
             >
               <Ionicons name="log-out-outline" size={22} color={colors.text} />

@@ -1,6 +1,9 @@
 -- Thinkollect: Supabase Migration
 -- Run this in your Supabase SQL Editor
 
+ -- 0. Drop the old table and policies
+    DROP TABLE IF EXISTS thoughts CASCADE;
+
 -- 1. Enable pgvector extension for embeddings
 CREATE EXTENSION IF NOT EXISTS vector;
 
