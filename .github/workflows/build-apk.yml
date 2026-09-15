@@ -27,6 +27,13 @@ jobs:
         working-directory: ./apps/mobile
         run: npm install
 
+      - name: Extract Env from eas.json
+        working-directory: ./apps/mobile
+        run: |
+          jq -r '.build.preview.env | to_entries | map("\(.key)=\(.value)") | .[]' eas.json > .env
+          echo "Created .env file for build:"
+          cat .env
+
       - name: Prebuild Android project
         working-directory: ./apps/mobile
         run: npx expo prebuild --platform android --clean

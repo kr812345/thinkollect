@@ -5,6 +5,8 @@ export interface Thought {
   content: string
   tags: string[]
   captured_at: number // epoch ms (device time, never changes)
+  updated_at: number  // epoch ms of last update
+  deleted: 0 | 1      // soft delete flag
   synced: 0 | 1       // 0 = not synced, 1 = synced to Supabase
   synced_at: number | null // epoch ms when Supabase confirmed
 }

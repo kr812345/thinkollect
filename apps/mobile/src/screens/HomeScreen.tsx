@@ -19,6 +19,7 @@ import { useThoughtStore } from '../store/thoughtStore'
 import { useThemeStore, getThemeColors } from '../store/themeStore'
 import CaptureCard from '../components/CaptureCard'
 import ThoughtRow from '../components/ThoughtRow'
+import { useAuthStore } from '../store/authStore'
 import type { Thought } from '../types'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>
@@ -184,10 +185,24 @@ export default function HomeScreen({ navigation }: Props) {
 
             <Pressable 
               style={[styles.modalOption, { borderBottomColor: colors.border }]}
-              onPress={() => setComingSoonVisible(true)}
+              onPress={() => {
+                setSettingsVisible(false)
+                triggerSync()
+              }}
             >
-              <Ionicons name="cloud-upload-outline" size={22} color={colors.text} />
-              <Text style={[styles.modalOptionText, { color: colors.text }]}>Sync Options</Text>
+              <Ionicons name="sync-outline" size={22} color={colors.text} />
+              <Text style={[styles.modalOptionText, { color: colors.text }]}>Sync Now</Text>
+            </Pressable>
+
+            <Pressable 
+              style={[styles.modalOption, { borderBottomColor: colors.border }]}
+              onPress={() => {
+                setSettingsVisible(false)
+                import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut())
+              }}
+            >
+              <Ionicons name="log-out-outline" size={22} color={colors.text} />
+              <Text style={[styles.modalOptionText, { color: colors.text }]}>Log Out</Text>
             </Pressable>
 
             <Pressable 

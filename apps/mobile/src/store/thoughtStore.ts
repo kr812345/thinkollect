@@ -46,6 +46,8 @@ export const useThoughtStore = create<ThoughtStore>((set, get) => ({
       content: content.trim(),
       tags,
       captured_at: Date.now(),
+      updated_at: Date.now(),
+      deleted: 0,
     }
 
     saveThought(thought)
