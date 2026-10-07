@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.thinkollect.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/logo_thinkollect.png",
@@ -29,7 +29,10 @@
       "expo-sqlite"
     ],
     "updates": {
-      "url": "https://u.expo.dev/ea37fcc4-f5d1-4e16-974a-074252f6d23f"
+      "url": "https://u.expo.dev/ea37fcc4-f5d1-4e16-974a-074252f6d23f",
+      "requestHeaders": {
+        "expo-channel-name": "main"
+      }
     },
     "runtimeVersion": {
       "policy": "appVersion"
