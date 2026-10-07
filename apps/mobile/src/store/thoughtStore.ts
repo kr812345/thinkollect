@@ -48,6 +48,7 @@ export const useThoughtStore = create<ThoughtStore>((set, get) => ({
       captured_at: Date.now(),
       updated_at: Date.now(),
       deleted: 0,
+      insight: null,
     }
 
     saveThought(thought)
@@ -58,8 +59,7 @@ export const useThoughtStore = create<ThoughtStore>((set, get) => ({
   removeThoughts: async (ids: string[]) => {
     deleteThoughts(ids)
     get().loadThoughts()
-    // Ideally we'd also delete from Supabase or queue deletions
-    // For now we just remove locally based on user's simple request
+    get().triggerSync()
   },
 
   editThought: async (id: string, newContent: string) => {

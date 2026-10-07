@@ -108,19 +108,22 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
-      <Pressable onPress={toggleTheme} style={styles.header}>
-        <View style={styles.headerTitleContainer}>
+      <View style={styles.header}>
+        <Pressable onPress={toggleTheme} style={styles.headerTitleContainer}>
           <Image 
             source={require('../../assets/logo_thinkollect.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
           <Text style={[styles.title, { color: colors.text }]}>Thinkollect</Text>
-        </View>
-        {totalCount > 0 && (
-          <Text style={[styles.counter, { color: colors.textDim }]}>{totalCount}</Text>
-        )}
-      </Pressable>
+          {totalCount > 0 && (
+            <Text style={[styles.counter, { color: colors.textDim }]}>{totalCount}</Text>
+          )}
+        </Pressable>
+        <Pressable onPress={() => navigation.navigate('Mind')} style={styles.mindBtn} accessibilityLabel="Open mind map">
+          <Ionicons name="git-network-outline" size={22} color={colors.insight} />
+        </Pressable>
+      </View>
 
       <CaptureCard />
 
@@ -181,6 +184,17 @@ export default function HomeScreen({ navigation }: Props) {
             >
               <Ionicons name="create-outline" size={22} color={colors.text} />
               <Text style={[styles.modalOptionText, { color: colors.text }]}>Edit Thoughts</Text>
+            </Pressable>
+
+            <Pressable 
+              style={[styles.modalOption, { borderBottomColor: colors.border }]}
+              onPress={() => {
+                setSettingsVisible(false)
+                navigation.navigate('Mind')
+              }}
+            >
+              <Ionicons name="git-network-outline" size={22} color={colors.text} />
+              <Text style={[styles.modalOptionText, { color: colors.text }]}>Mind</Text>
             </Pressable>
 
             <Pressable 
@@ -254,6 +268,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  mindBtn: {
+    padding: 8,
   },
   logo: {
     width: 24,

@@ -2,6 +2,14 @@ import { Platform } from 'react-native'
 import * as SQLite from 'expo-sqlite'
 import type { Thought } from '../types'
 
+function mapRow(r: Omit<Thought, 'tags'> & { tags: string }): Thought {
+  return {
+    ...r,
+    tags: JSON.parse(r.tags) as string[],
+    insight: r.insight ?? null,
+  }
+}
+
 // Max thoughts stored on device (FIFO ring buffer)
 export const LOCAL_LIMIT = 50
 
@@ -58,15 +66,16 @@ export function initDb(): void {
       ON thoughts(synced, captured_at ASC);
   `)
   
-  // Simple migration strategy for the two new columns
+  // Simple migration strategy for added columns
   try { db.execSync('ALTER TABLE thoughts ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0;') } catch (e) {}
   try { db.execSync('ALTER TABLE thoughts ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0;') } catch (e) {}
+  try { db.execSync('ALTER TABLE thoughts ADD COLUMN insight TEXT;') } catch (e) {}
 }
 
 // Insert a new thought and evict oldest *synced* if over limit
 export function saveThought(thought: Omit<Thought, 'synced' | 'synced_at'>): void {
   if (Platform.OS === 'web') {
-    webThoughts.push({ ...thought, synced: 0, deleted: 0 } as Thought)
+    webThoughts.push({ ...thought, synced: 0, deleted: 0, insight: thought.insight ?? null } as Thought)
     // Evict oldest synced thought if we exceed the limit
     if (webThoughts.length > LOCAL_LIMIT) {
       const oldestSyncedIdx = webThoughts.findIndex(t => t.synced === 1)
@@ -80,8 +89,8 @@ export function saveThought(thought: Omit<Thought, 'synced' | 'synced_at'>): voi
 
   const db = getDb()
   db.runSync(
-    `INSERT INTO thoughts (id, content, tags, captured_at, updated_at, deleted, synced, synced_at)
-     VALUES (?, ?, ?, ?, ?, 0, 0, NULL)`,
+    `INSERT INTO thoughts (id, content, tags, captured_at, updated_at, deleted, synced, synced_at, insight)
+     VALUES (?, ?, ?, ?, ?, 0, 0, NULL, NULL)`,
     thought.id,
     thought.content,
     JSON.stringify(thought.tags),
@@ -114,7 +123,7 @@ export function getAllThoughts(): Thought[] {
   const rows = db.getAllSync<Omit<Thought, 'tags'> & { tags: string }>(
     `SELECT * FROM thoughts WHERE deleted = 0 ORDER BY captured_at DESC`
   )
-  return rows.map((r) => ({ ...r, tags: JSON.parse(r.tags) as string[] }))
+  return rows.map(mapRow)
 }
 
 // Get all unsynced thoughts (for sync engine)
@@ -126,7 +135,7 @@ export function getUnsyncedThoughts(): Thought[] {
   const rows = db.getAllSync<Omit<Thought, 'tags'> & { tags: string }>(
     `SELECT * FROM thoughts WHERE synced = 0 ORDER BY captured_at ASC`
   )
-  return rows.map((r) => ({ ...r, tags: JSON.parse(r.tags) as string[] }))
+  return rows.map(mapRow)
 }
 
 // Mark a list of thought IDs as synced with the exact server-acknowledged time
@@ -191,14 +200,14 @@ export function updateThought(id: string, content: string): void {
   const now = Date.now()
   if (Platform.OS === 'web') {
     webThoughts = webThoughts.map(t => 
-      t.id === id ? { ...t, content, synced: 0, synced_at: null, updated_at: now } : t
+      t.id === id ? { ...t, content, synced: 0, synced_at: null, updated_at: now, insight: null } : t
     )
     saveWebDb()
     return
   }
   const db = getDb()
   db.runSync(
-    `UPDATE thoughts SET content = ?, synced = 0, synced_at = NULL, updated_at = ? WHERE id = ?`,
+    `UPDATE thoughts SET content = ?, synced = 0, synced_at = NULL, updated_at = ?, insight = NULL WHERE id = ?`,
     content,
     now,
     id
@@ -210,9 +219,9 @@ export function upsertThoughtFromServer(thought: Thought): void {
   if (Platform.OS === 'web') {
     const existing = webThoughts.find(t => t.id === thought.id)
     if (!existing) {
-      webThoughts.push({ ...thought, synced: 1, synced_at: Date.now() })
-    } else if (existing.synced === 1 || thought.updated_at > existing.updated_at) {
-      Object.assign(existing, { ...thought, synced: 1, synced_at: Date.now() })
+      webThoughts.push({ ...thought, synced: 1, synced_at: Date.now(), insight: thought.insight ?? null })
+    } else if (existing.synced === 1 || thought.updated_at > existing.updated_at || thought.insight) {
+      Object.assign(existing, { ...thought, synced: 1, synced_at: Date.now(), insight: thought.insight ?? existing.insight ?? null })
     }
     saveWebDb()
     return
@@ -226,24 +235,26 @@ export function upsertThoughtFromServer(thought: Thought): void {
 
   if (!existing) {
     db.runSync(
-      `INSERT INTO thoughts (id, content, tags, captured_at, updated_at, deleted, synced, synced_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
+      `INSERT INTO thoughts (id, content, tags, captured_at, updated_at, deleted, synced, synced_at, insight)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       thought.id,
       thought.content,
       JSON.stringify(thought.tags),
       thought.captured_at,
       thought.updated_at,
       thought.deleted,
-      Date.now()
+      Date.now(),
+      thought.insight ?? null
     )
-  } else if (existing.synced === 1 || thought.updated_at > existing.updated_at) {
+  } else if (existing.synced === 1 || thought.updated_at > existing.updated_at || thought.insight) {
     db.runSync(
-      `UPDATE thoughts SET content = ?, tags = ?, updated_at = ?, deleted = ?, synced = 1, synced_at = ? WHERE id = ?`,
+      `UPDATE thoughts SET content = ?, tags = ?, updated_at = ?, deleted = ?, synced = 1, synced_at = ?, insight = ? WHERE id = ?`,
       thought.content,
       JSON.stringify(thought.tags),
       thought.updated_at,
       thought.deleted,
       Date.now(),
+      thought.insight ?? null,
       thought.id
     )
   }

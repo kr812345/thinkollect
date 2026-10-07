@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore, PASSWORD_MIN_LENGTH } from '../store/authStore'
 import { useThemeStore, getThemeColors } from '../store/themeStore'
 
 export default function SignUpScreen({ navigation }: any) {
@@ -16,6 +16,10 @@ export default function SignUpScreen({ navigation }: any) {
   const handleSignUp = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password')
+      return
+    }
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      Alert.alert('Error', `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
       return
     }
 
@@ -65,9 +69,12 @@ export default function SignUpScreen({ navigation }: any) {
               <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity 
-            style={[styles.button, { backgroundColor: colors.tint }]} 
+          <Text style={[styles.hint, { color: colors.textMuted }]}>
+            At least {PASSWORD_MIN_LENGTH} characters
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: colors.tint }]}
             onPress={handleSignUp}
             disabled={loading}
           >
@@ -104,6 +111,7 @@ const styles = StyleSheet.create({
   icon: { marginRight: 12 },
   input: { flex: 1, fontSize: 16 },
   eyeIcon: { padding: 4 },
+  hint: { fontSize: 12, marginTop: -8, marginBottom: 16, marginLeft: 4 },
   button: { height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   linkContainer: { marginTop: 24, alignItems: 'center' },

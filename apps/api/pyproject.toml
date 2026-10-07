@@ -1,0 +1,13 @@
+[tool.fastapi]
+entrypoint = "main:app"
+
+[project]
+name = "thinkollect"
+version = "0.1.0"
+dependencies = [
+    "pwdlib[argon2]>=0.3.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

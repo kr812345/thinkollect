@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { initDb } from './src/db/local'
 import HomeScreen from './src/screens/HomeScreen'
 import DetailScreen from './src/screens/DetailScreen'
+import MindScreen from './src/screens/MindScreen'
 import SignInScreen from './src/screens/SignInScreen'
 import SignUpScreen from './src/screens/SignUpScreen'
 import { useThemeStore, getThemeColors } from './src/store/themeStore'
@@ -15,6 +16,7 @@ import { useAuthStore } from './src/store/authStore'
 export type RootStackParamList = {
   Home: undefined
   Detail: { id: string }
+  Mind: undefined
 }
 
 export type AuthStackParamList = {
@@ -70,6 +72,7 @@ export default function App() {
             <Stack.Navigator screenOptions={{ headerShown: false }}>
               <Stack.Screen name="Home" component={HomeScreen} />
               <Stack.Screen name="Detail" component={DetailScreen} />
+              <Stack.Screen name="Mind" component={MindScreen} />
             </Stack.Navigator>
           ) : (
             <AuthStack.Navigator screenOptions={{ headerShown: false }}>

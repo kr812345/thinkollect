@@ -7,6 +7,7 @@ import {
   Pressable,
   Share,
   Platform,
+  ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -65,7 +66,7 @@ export default function DetailScreen({ route, navigation }: Props) {
         <Pressable onPress={handleSave} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={28} color={colors.text} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>Edit Thought</Text>
+        <Text style={[styles.title, { color: colors.text }]}>thought</Text>
         <View style={styles.headerRight}>
           <Pressable onPress={handleShare} style={styles.headerBtn}>
             <Ionicons name="share-outline" size={24} color={colors.text} />
@@ -75,15 +76,24 @@ export default function DetailScreen({ route, navigation }: Props) {
           </Pressable>
         </View>
       </View>
-      
-      <TextInput
-        style={[styles.input, { color: colors.text }]}
-        value={content}
-        onChangeText={setContent}
-        multiline
-        autoFocus
-        selectionColor={colors.tint}
-      />
+
+      <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+        <TextInput
+          style={[styles.input, { color: colors.text }]}
+          value={content}
+          onChangeText={setContent}
+          multiline
+          autoFocus
+          selectionColor={colors.tint}
+        />
+
+        <View style={[styles.mentorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.mentorLabel, { color: colors.insight }]}>mentor</Text>
+          <Text style={[styles.mentorBody, { color: thought.insight ? colors.textMuted : colors.textDim }]}>
+            {thought.insight || 'A short note will land here after sync.'}
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -102,8 +112,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontFamily: 'System',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontWeight: '600',
+    letterSpacing: 1,
   },
   headerRight: {
     flexDirection: 'row',
@@ -113,12 +124,34 @@ const styles = StyleSheet.create({
   headerBtn: {
     padding: 8,
   },
-  input: {
+  body: {
     flex: 1,
+  },
+  input: {
+    minHeight: 180,
     padding: 16,
     fontSize: 17,
     lineHeight: 26,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     textAlignVertical: 'top',
+  },
+  mentorCard: {
+    marginHorizontal: 16,
+    marginBottom: 32,
+    padding: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  mentorLabel: {
+    fontSize: 11,
+    letterSpacing: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  mentorBody: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 })

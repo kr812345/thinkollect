@@ -20,6 +20,51 @@ interface AuthState {
   logout: () => void
 }
 
+// Must match the backend (apps/api/src/models/auth.py)
+export const PASSWORD_MIN_LENGTH = 8
+
+function apiUrl(): string {
+  return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000'
+}
+
+/** Extract a human-readable message from a FastAPI error body. */
+function errorMessage(data: any, fallback: string): string {
+  const detail = data?.detail
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail) && detail.length > 0) {
+    return detail.map((e: any) => e?.msg).filter(Boolean).join(', ') || fallback
+  }
+  return fallback
+}
+
+async function authenticate(
+  endpoint: 'login' | 'signup',
+  email: string,
+  password: string,
+): Promise<Session> {
+  const res = await fetch(`${apiUrl()}/api/auth/${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+
+  let data: any = null
+  try {
+    data = await res.json()
+  } catch {
+    // Non-JSON error body (proxy error, server down, etc.)
+  }
+
+  if (!res.ok) {
+    throw new Error(errorMessage(data, `Request failed (${res.status})`))
+  }
+  if (!data?.token || !data?.user?.id) {
+    throw new Error('Server returned an incomplete session.')
+  }
+
+  return { token: data.token, user: { id: data.user.id, email: data.user.email } }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   initialized: false,
@@ -29,50 +74,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ initialized: true })
   },
   login: async (email, password) => {
-    try {
-      const url = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000'
-      // Placeholder fetch call for actual implementation
-      // const res = await fetch(`${url}/auth/login`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ email, password }),
-      // })
-    } catch (e) {
-      console.log(e)
-    }
-
-    // Mock response after 1 second delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        set({
-          session: {
-            token: 'mock-token',
-            user: { id: 'user-123', email },
-          }
-        })
-        resolve()
-      }, 1000)
-    })
+    const session = await authenticate('login', email, password)
+    set({ session })
   },
   signUp: async (email, password) => {
-    try {
-      const url = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000'
-      // Placeholder fetch call for actual implementation
-      // const res = await fetch(`${url}/auth/signup`, { ... })
-    } catch (e) {
-      console.log(e)
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      throw new Error(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
     }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        set({
-          session: {
-            token: 'mock-token',
-            user: { id: 'user-123', email },
-          }
-        })
-        resolve()
-      }, 1000)
-    })
+    const session = await authenticate('signup', email, password)
+    set({ session })
   },
   logout: () => {
     set({ session: null })

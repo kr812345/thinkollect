@@ -1,61 +1,62 @@
-import os
-from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
-from supabase import create_client, Client
-from sentence_transformers import SentenceTransformer
+import logging
 
-app = FastAPI(title="Thinkollect Backend")
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-# Initialize Supabase client
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+from src.core.config import get_settings
+from src.routers import auth, thought
 
-if SUPABASE_URL and SUPABASE_SERVICE_KEY:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-else:
-    print("Warning: SUPABASE_URL or SUPABASE_SERVICE_KEY not set")
-    supabase = None
+logging.basicConfig(level=logging.INFO)
 
-# Initialize local embedding model
-print("Loading embedding model...")
-# all-MiniLM-L6-v2 is fast, lightweight, and produces 384-dimensional vectors
-model = SentenceTransformer('all-MiniLM-L6-v2')
-print("Model loaded.")
+settings = get_settings()
 
-class WebhookPayload(BaseModel):
-    type: str
-    table: str
-    schema: str
-    record: dict
-    old_record: dict | None
+app = FastAPI(title="Thinkollect Server")
 
-@app.post("/webhook/embed-thought")
-async def embed_thought(payload: dict):
-    """
-    Webhook endpoint meant to be called by Supabase when a new thought is inserted or updated.
-    """
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase not configured")
+# --- CORS ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
-    # Supabase webhooks send a payload with a 'record' object
-    record = payload.get("record", {})
-    thought_id = record.get("id")
-    content = record.get("content")
 
-    if not thought_id or not content:
-        raise HTTPException(status_code=400, detail="Missing id or content in record")
+# --- Security headers ---
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    return response
 
-    try:
-        # Generate embedding
-        embedding = model.encode(content).tolist()
 
-        # Update the thought record in Supabase with the new embedding
-        response = supabase.table('thoughts').update({'embedding': embedding}).eq('id', thought_id).execute()
-        
-        return {"status": "success", "message": "Embedding updated"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# --- Error handling: consistent, non-leaky error bodies ---
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    # Strip raw exception context / internal values from error details.
+    errors = [
+        {"loc": [str(loc) for loc in err.get("loc", [])], "msg": err.get("msg", "")}
+        for err in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": errors})
+
+
+# --- Routers (contract base URL: /api) ---
+app.include_router(auth.router, prefix="/api")
+app.include_router(thought.router, prefix="/api")
+
 
 @app.get("/")
 def read_root():
     return {"message": "Thinkollect API is running"}
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}

@@ -21,7 +21,8 @@ export const getThemeColors = (theme: 'dark' | 'bright') => {
       textDim: '#a3a3a3',
       tint: '#007aff',
       danger: '#ef4444',
-      card: '#ffffff'
+      card: '#ffffff',
+      insight: '#5c6b52',
     }
   }
   return {
@@ -31,8 +32,9 @@ export const getThemeColors = (theme: 'dark' | 'bright') => {
     text: '#f5f5f5',
     textMuted: '#a3a3a3',
     textDim: '#3a3a3a',
-    tint: '#0a84ff',
+    tint: '#8fa382',
     danger: '#ef4444',
-    card: '#0a0a0a'
+    card: '#0a0a0a',
+    insight: '#8fa382',
   }
 }
