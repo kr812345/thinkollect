@@ -13,8 +13,7 @@
     },
     "android": {
       "package": "com.thinkollect.app",
-      "versionCode": 2,
-      "usesCleartextTraffic": true,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/logo_thinkollect.png",
