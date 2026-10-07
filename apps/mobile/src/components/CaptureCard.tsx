@@ -66,9 +66,9 @@ export default function CaptureCard() {
           disabled={!text.trim() || isOverLimit}
           style={({ pressed }) => [
             styles.dumpBtn,
-            { borderColor: colors.text },
+            { borderColor: colors.insight },
             (!text.trim() || isOverLimit) && { borderColor: colors.border },
-            pressed && { backgroundColor: colors.text },
+            pressed && { backgroundColor: colors.insight },
           ]}
           accessibilityLabel="Dump thought"
           accessibilityRole="button"
@@ -76,7 +76,7 @@ export default function CaptureCard() {
           {({ pressed }) => (
             <Text style={[
               styles.dumpBtnText,
-              { color: colors.text },
+              { color: colors.insight },
               (!text.trim() || isOverLimit) && { color: colors.textDim },
               pressed && { color: colors.bg }
             ]}>
@@ -91,16 +91,16 @@ export default function CaptureCard() {
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    padding: 18,
     marginHorizontal: 16,
     minHeight: 140,
   },
   input: {
-    fontSize: 17,
-    lineHeight: 26,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 15,
+    lineHeight: 23,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -113,16 +113,17 @@ const styles = StyleSheet.create({
   },
   counter: {
     fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
   },
   dumpBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
   },
   dumpBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     letterSpacing: 0.5,
   },

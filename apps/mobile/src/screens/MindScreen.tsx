@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Animated,
+  Easing,
   View,
   Text,
   StyleSheet,
@@ -42,6 +44,9 @@ interface ChatMessage {
   sources?: { id: string; content: string }[]
 }
 
+const CLUSTER_DEGREE = 3
+const TABS_PADDING = 3
+
 function snippet(text: string, max = 42): string {
   const clean = text.replace(/\s+/g, ' ').trim()
   return clean.length > max ? clean.slice(0, max - 1) + '…' : clean
@@ -51,27 +56,50 @@ export default function MindScreen({ navigation }: Props) {
   const theme = useThemeStore((s) => s.theme)
   const colors = getThemeColors(theme)
   const [tab, setTab] = useState<Tab>('map')
+  const [tabWidth, setTabWidth] = useState(0)
+  const indicator = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.spring(indicator, {
+      toValue: tab === 'map' ? 0 : 1,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 4,
+    }).start()
+  }, [tab, indicator])
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
-          <Ionicons name="chevron-back" size={26} color={colors.text} />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={[styles.title, { color: colors.text }]}>mind</Text>
         <View style={{ width: 42 }} />
       </View>
 
-      <View style={[styles.tabs, { borderColor: colors.border }]}>
-        {(['map', 'chat'] as Tab[]).map((name) => (
-          <Pressable
-            key={name}
-            onPress={() => setTab(name)}
+      <View
+        style={[styles.tabs, { backgroundColor: colors.surface }]}
+        onLayout={(e) => setTabWidth((e.nativeEvent.layout.width - TABS_PADDING * 2) / 2)}
+      >
+        {tabWidth > 0 && (
+          <Animated.View
+            pointerEvents="none"
             style={[
-              styles.tab,
-              tab === name && { backgroundColor: colors.card, borderColor: colors.insight },
+              styles.tabIndicator,
+              {
+                width: tabWidth,
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                transform: [
+                  { translateX: indicator.interpolate({ inputRange: [0, 1], outputRange: [0, tabWidth] }) },
+                ],
+              },
             ]}
-          >
+          />
+        )}
+        {(['map', 'chat'] as Tab[]).map((name) => (
+          <Pressable key={name} onPress={() => setTab(name)} style={styles.tab}>
             <Text style={[styles.tabText, { color: tab === name ? colors.text : colors.textMuted }]}>
               {name}
             </Text>
@@ -132,6 +160,31 @@ function MapPane({
     return { cx, cy, positions }
   }, [nodes, width, height])
 
+  const degree = useMemo(() => {
+    const counts: Record<string, number> = {}
+    edges.forEach((edge) => {
+      counts[edge.source] = (counts[edge.source] || 0) + 1
+      counts[edge.target] = (counts[edge.target] || 0) + 1
+    })
+    return counts
+  }, [edges])
+
+  const pulse = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 2400,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      })
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [pulse])
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.18] })
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] })
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -177,8 +230,9 @@ function MapPane({
               y1={a.y}
               x2={b.x}
               y2={b.y}
-              stroke={colors.border}
-              strokeWidth={1}
+              stroke={colors.insight}
+              strokeOpacity={0.15 + 0.5 * Math.max(0, Math.min(1, edge.similarity))}
+              strokeWidth={0.5}
             />
           )
         })}
@@ -186,24 +240,42 @@ function MapPane({
       {nodes.map((node) => {
         const pos = layout.positions[node.id]
         if (!pos) return null
+        const isCluster = (degree[node.id] || 0) >= CLUSTER_DEGREE
         return (
-          <Pressable
-            key={node.id}
-            onPress={() => navigation.navigate('Detail', { id: node.id })}
-            style={[
-              styles.node,
-              {
-                left: pos.x - 54,
-                top: pos.y - 28,
-                backgroundColor: colors.card,
-                borderColor: colors.insight,
-              },
-            ]}
-          >
-            <Text style={[styles.nodeText, { color: colors.text }]} numberOfLines={2}>
-              {snippet(node.content, 36)}
-            </Text>
-          </Pressable>
+          <React.Fragment key={node.id}>
+            {isCluster && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.node,
+                  styles.ring,
+                  {
+                    left: pos.x - 54,
+                    top: pos.y - 28,
+                    borderColor: colors.insight,
+                    opacity: ringOpacity,
+                    transform: [{ scale: ringScale }],
+                  },
+                ]}
+              />
+            )}
+            <Pressable
+              onPress={() => navigation.navigate('Detail', { id: node.id })}
+              style={[
+                styles.node,
+                {
+                  left: pos.x - 54,
+                  top: pos.y - 28,
+                  backgroundColor: colors.card,
+                  borderColor: isCluster ? colors.insight : colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.nodeText, { color: colors.text }]} numberOfLines={2}>
+                {snippet(node.content, 36)}
+              </Text>
+            </Pressable>
+          </React.Fragment>
         )
       })}
     </View>
@@ -275,8 +347,8 @@ function ChatPane({ colors }: { colors: ReturnType<typeof getThemeColors> }) {
             style={[
               styles.bubble,
               item.role === 'user'
-                ? { alignSelf: 'flex-end', backgroundColor: colors.card, borderColor: colors.insight }
-                : { alignSelf: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border },
+                ? { alignSelf: 'flex-end', backgroundColor: colors.card, borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth }
+                : { alignSelf: 'flex-start', backgroundColor: colors.insightBg, borderLeftColor: colors.insight, borderLeftWidth: 2 },
             ]}
           >
             <Text style={[styles.bubbleText, { color: colors.text }]}>{item.content}</Text>
@@ -309,7 +381,7 @@ function ChatPane({ colors }: { colors: ReturnType<typeof getThemeColors> }) {
           {sending ? (
             <ActivityIndicator size="small" color={colors.insight} />
           ) : (
-            <Ionicons name="arrow-up" size={18} color={draft.trim() ? colors.insight : colors.textDim} />
+            <Ionicons name="arrow-up" size={15} color={draft.trim() ? colors.insight : colors.textDim} />
           )}
         </Pressable>
       </View>
@@ -329,30 +401,35 @@ const styles = StyleSheet.create({
   },
   headerBtn: { padding: 8 },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     letterSpacing: 2,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   tabs: {
     flexDirection: 'row',
-    margin: 16,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 3,
-    gap: 4,
+    alignSelf: 'center',
+    width: 200,
+    margin: 12,
+    borderRadius: 999,
+    padding: TABS_PADDING,
+  },
+  tabIndicator: {
+    position: 'absolute',
+    top: TABS_PADDING,
+    bottom: TABS_PADDING,
+    left: TABS_PADDING,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    paddingVertical: 5,
   },
   tabText: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: 1,
   },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -371,6 +448,10 @@ const styles = StyleSheet.create({
     padding: 8,
     justifyContent: 'center',
   },
+  ring: {
+    height: 56,
+    backgroundColor: 'transparent',
+  },
   nodeText: {
     fontSize: 11,
     lineHeight: 15,
@@ -380,15 +461,14 @@ const styles = StyleSheet.create({
   chatEmpty: { flex: 1, justifyContent: 'center', paddingBottom: 80 },
   bubble: {
     maxWidth: '86%',
-    borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 12,
     marginBottom: 10,
   },
   bubbleText: {
     fontSize: 14,
     lineHeight: 21,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   },
   sources: { marginTop: 10, gap: 6 },
   sourceChip: {
@@ -409,20 +489,20 @@ const styles = StyleSheet.create({
   },
   composerInput: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 36,
     maxHeight: 120,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 14,
+    fontSize: 13,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    borderWidth: 1,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },

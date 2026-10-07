@@ -64,15 +64,15 @@ export default function DetailScreen({ route, navigation }: Props) {
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={handleSave} style={styles.headerBtn}>
-          <Ionicons name="chevron-back" size={28} color={colors.text} />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={[styles.title, { color: colors.text }]}>thought</Text>
         <View style={styles.headerRight}>
           <Pressable onPress={handleShare} style={styles.headerBtn}>
-            <Ionicons name="share-outline" size={24} color={colors.text} />
+            <Ionicons name="share-outline" size={19} color={colors.text} />
           </Pressable>
           <Pressable onPress={handleDelete} style={styles.headerBtn}>
-            <Ionicons name="trash-outline" size={24} color={colors.danger} />
+            <Ionicons name="trash-outline" size={19} color={colors.danger} />
           </Pressable>
         </View>
       </View>
@@ -87,7 +87,7 @@ export default function DetailScreen({ route, navigation }: Props) {
           selectionColor={colors.tint}
         />
 
-        <View style={[styles.mentorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.mentorCard, { backgroundColor: colors.insightBg, borderLeftColor: colors.insight }]}>
           <Text style={[styles.mentorLabel, { color: colors.insight }]}>mentor</Text>
           <Text style={[styles.mentorBody, { color: thought.insight ? colors.textMuted : colors.textDim }]}>
             {thought.insight || 'A short note will land here after sync.'}
@@ -111,15 +111,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontWeight: '600',
+    fontWeight: '500',
     letterSpacing: 1,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   headerBtn: {
     padding: 8,
@@ -130,17 +130,18 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 180,
     padding: 16,
-    fontSize: 17,
-    lineHeight: 26,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 16,
+    lineHeight: 25,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     textAlignVertical: 'top',
   },
   mentorCard: {
     marginHorizontal: 16,
     marginBottom: 32,
-    padding: 16,
-    borderRadius: 10,
-    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    borderLeftWidth: 2,
   },
   mentorLabel: {
     fontSize: 11,
@@ -152,6 +153,7 @@ const styles = StyleSheet.create({
   mentorBody: {
     fontSize: 14,
     lineHeight: 22,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontStyle: 'italic',
   },
 })

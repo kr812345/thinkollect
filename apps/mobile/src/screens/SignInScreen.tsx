@@ -37,7 +37,7 @@ export default function SignInScreen({ navigation }: any) {
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>Sign in to continue to Thinkollect</Text>
           
           <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.icon} />
+            <Ionicons name="mail-outline" size={16} color={colors.textMuted} style={styles.icon} />
             <TextInput
               style={[styles.input, { color: colors.text }]}
               placeholder="Email"
@@ -51,7 +51,7 @@ export default function SignInScreen({ navigation }: any) {
           </View>
 
           <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.icon} />
+            <Ionicons name="lock-closed-outline" size={16} color={colors.textMuted} style={styles.icon} />
             <TextInput
               style={[styles.input, { color: colors.text }]}
               placeholder="Password"
@@ -61,7 +61,7 @@ export default function SignInScreen({ navigation }: any) {
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.textMuted} />
+              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={16} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
           
@@ -71,9 +71,9 @@ export default function SignInScreen({ navigation }: any) {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.onTint} />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={[styles.buttonText, { color: colors.onTint }]}>Sign In</Text>
             )}
           </TouchableOpacity>
 
@@ -89,22 +89,22 @@ export default function SignInScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 36, fontWeight: '800', marginBottom: 8, letterSpacing: -0.5 },
-  subtitle: { fontSize: 16, marginBottom: 40, fontWeight: '500' },
+  title: { fontSize: 26, fontWeight: '600', marginBottom: 6, letterSpacing: -0.3 },
+  subtitle: { fontSize: 14, marginBottom: 28 },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    height: 44,
   },
-  icon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 16 },
+  icon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 14 },
   eyeIcon: { padding: 4 },
-  button: { height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  linkContainer: { marginTop: 24, alignItems: 'center' },
-  link: { fontSize: 16, fontWeight: '600' },
+  button: { height: 38, minWidth: 140, paddingHorizontal: 22, borderRadius: 8, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  buttonText: { fontSize: 14, fontWeight: '500' },
+  linkContainer: { marginTop: 20, alignItems: 'center' },
+  link: { fontSize: 13, fontWeight: '500' },
 })

@@ -9,6 +9,7 @@ import {
   Pressable,
   Image,
   Modal,
+  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import NetInfo from '@react-native-community/netinfo'
@@ -121,7 +122,7 @@ export default function HomeScreen({ navigation }: Props) {
           )}
         </Pressable>
         <Pressable onPress={() => navigation.navigate('Mind')} style={styles.mindBtn} accessibilityLabel="Open mind map">
-          <Ionicons name="git-network-outline" size={22} color={colors.insight} />
+          <Ionicons name="git-network-outline" size={20} color={colors.insight} />
         </Pressable>
       </View>
 
@@ -148,13 +149,13 @@ export default function HomeScreen({ navigation }: Props) {
       {selectionMode && (
         <View style={[styles.selectionBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
           <Pressable onPress={cancelSelection} style={styles.selectionBtn}>
-            <Text style={{ color: colors.text }}>Cancel</Text>
+            <Text style={{ color: colors.text, fontSize: 13 }}>Cancel</Text>
           </Pressable>
-          <Text style={{ color: colors.text, fontWeight: '600' }}>
-            {selectedIds.size} Selected
-          </Text>
+            <Text style={{ color: colors.text, fontWeight: '500', fontSize: 13 }}>
+              {selectedIds.size} Selected
+            </Text>
           <Pressable onPress={deleteSelected} style={styles.selectionBtn} disabled={selectedIds.size === 0}>
-            <Text style={{ color: selectedIds.size > 0 ? colors.danger : colors.textMuted, fontWeight: '600' }}>Delete</Text>
+            <Text style={{ color: selectedIds.size > 0 ? colors.danger : colors.textMuted, fontWeight: '500', fontSize: 13 }}>Delete</Text>
           </Pressable>
         </View>
       )}
@@ -162,17 +163,17 @@ export default function HomeScreen({ navigation }: Props) {
       {/* Settings FAB */}
       {!selectionMode && (
         <Pressable 
-          style={[styles.fab, { backgroundColor: colors.tint }]} 
+          style={[styles.fab, { backgroundColor: colors.card, borderColor: colors.border }]} 
           onPress={() => setSettingsVisible(true)}
         >
-          <Ionicons name="settings-outline" size={24} color="#fff" />
+          <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
         </Pressable>
       )}
 
       {/* Settings Modal */}
       <Modal visible={settingsVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Settings</Text>
             
             <Pressable 
@@ -182,7 +183,7 @@ export default function HomeScreen({ navigation }: Props) {
                 setSelectionMode(true)
               }}
             >
-              <Ionicons name="create-outline" size={22} color={colors.text} />
+              <Ionicons name="create-outline" size={18} color={colors.text} />
               <Text style={[styles.modalOptionText, { color: colors.text }]}>Edit Thoughts</Text>
             </Pressable>
 
@@ -193,7 +194,7 @@ export default function HomeScreen({ navigation }: Props) {
                 navigation.navigate('Mind')
               }}
             >
-              <Ionicons name="git-network-outline" size={22} color={colors.text} />
+              <Ionicons name="git-network-outline" size={18} color={colors.text} />
               <Text style={[styles.modalOptionText, { color: colors.text }]}>Mind</Text>
             </Pressable>
 
@@ -204,7 +205,7 @@ export default function HomeScreen({ navigation }: Props) {
                 triggerSync()
               }}
             >
-              <Ionicons name="sync-outline" size={22} color={colors.text} />
+              <Ionicons name="sync-outline" size={18} color={colors.text} />
               <Text style={[styles.modalOptionText, { color: colors.text }]}>Sync Now</Text>
             </Pressable>
 
@@ -215,7 +216,7 @@ export default function HomeScreen({ navigation }: Props) {
                 useAuthStore.getState().logout()
               }}
             >
-              <Ionicons name="log-out-outline" size={22} color={colors.text} />
+              <Ionicons name="log-out-outline" size={18} color={colors.text} />
               <Text style={[styles.modalOptionText, { color: colors.text }]}>Log Out</Text>
             </Pressable>
 
@@ -223,7 +224,7 @@ export default function HomeScreen({ navigation }: Props) {
               style={styles.modalCloseBtn}
               onPress={() => setSettingsVisible(false)}
             >
-              <Text style={{ color: colors.tint, fontWeight: '600', fontSize: 16 }}>Close</Text>
+              <Text style={{ color: colors.tint, fontWeight: '500', fontSize: 14 }}>Close</Text>
             </Pressable>
           </View>
         </View>
@@ -233,7 +234,7 @@ export default function HomeScreen({ navigation }: Props) {
       <Modal visible={comingSoonVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.bg, borderColor: colors.border, alignItems: 'center', padding: 32 }]}>
-            <Ionicons name="construct-outline" size={48} color={colors.tint} style={{ marginBottom: 16 }} />
+            <Ionicons name="construct-outline" size={36} color={colors.tint} style={{ marginBottom: 12 }} />
             <Text style={[styles.modalTitle, { color: colors.text }]}>Coming Soon</Text>
             <Text style={{ color: colors.textMuted, textAlign: 'center', marginBottom: 24, marginTop: 8 }}>
               This feature is under construction and will be available in a future update.
@@ -242,7 +243,7 @@ export default function HomeScreen({ navigation }: Props) {
               style={[styles.dumpBtn, { backgroundColor: colors.tint, borderWidth: 0 }]}
               onPress={() => setComingSoonVisible(false)}
             >
-              <Text style={{ color: '#fff', fontWeight: '600', paddingHorizontal: 16, paddingVertical: 4 }}>Got it</Text>
+              <Text style={{ color: colors.onTint, fontWeight: '500', fontSize: 13 }}>Got it</Text>
             </Pressable>
           </View>
         </View>
@@ -278,13 +279,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'System',
-    fontWeight: '600', // Semibold
-    letterSpacing: 2, // Extra space
+    fontWeight: '500',
+    letterSpacing: 1.5,
   },
   counter: {
     fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
   },
   divider: {
@@ -310,22 +312,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 32,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
   },
   selectionBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   selectionBtn: {
@@ -333,7 +332,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -343,32 +342,32 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 12,
+    gap: 10,
   },
   modalOptionText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   modalCloseBtn: {
-    marginTop: 20,
+    marginTop: 12,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   dumpBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 8,
   },
 })

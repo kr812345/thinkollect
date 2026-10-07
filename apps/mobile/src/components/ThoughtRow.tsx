@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { View, Text, StyleSheet, Platform, Pressable } from 'react-native'
-import { formatDistanceToNowStrict } from 'date-fns'
+import { format, formatDistanceToNowStrict } from 'date-fns'
 import { Ionicons } from '@expo/vector-icons'
 import type { Thought } from '../types'
 import { useThemeStore, getThemeColors } from '../store/themeStore'
@@ -17,9 +17,9 @@ function ThoughtRow({ thought, onPress, onLongPress, selectionMode, isSelected }
   const theme = useThemeStore((s) => s.theme)
   const colors = getThemeColors(theme)
 
-  const relativeTime = formatDistanceToNowStrict(new Date(thought.captured_at), {
-    addSuffix: true,
-  })
+  const capturedAt = new Date(thought.captured_at)
+  const relativeTime = formatDistanceToNowStrict(capturedAt, { addSuffix: true })
+  const clockTime = format(capturedAt, 'HH:mm')
 
   return (
     <Pressable 
@@ -28,7 +28,7 @@ function ThoughtRow({ thought, onPress, onLongPress, selectionMode, isSelected }
       style={[
         styles.row, 
         { borderBottomColor: colors.border },
-        isSelected && { backgroundColor: colors.border }
+        isSelected && { backgroundColor: colors.surface }
       ]}
     >
       <View style={styles.contentContainer}>
@@ -45,7 +45,12 @@ function ThoughtRow({ thought, onPress, onLongPress, selectionMode, isSelected }
             {thought.content}
           </Text>
           <View style={styles.meta}>
-            <Text style={[styles.time, { color: colors.textDim }]}>{relativeTime}</Text>
+            <Text style={[styles.time, { color: colors.textDim }]}>
+              {clockTime} · {relativeTime}
+            </Text>
+            {thought.insight && (
+              <Text style={[styles.time, { color: colors.insight }]}>· mentor</Text>
+            )}
             {thought.synced === 0 && <Text style={[styles.unsyncedDot, { color: colors.textDim }]}>·</Text>}
           </View>
         </View>
@@ -58,8 +63,8 @@ export default memo(ThoughtRow)
 
 const styles = StyleSheet.create({
   row: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   contentContainer: {
@@ -69,7 +74,7 @@ const styles = StyleSheet.create({
   content: {
     fontSize: 15,
     lineHeight: 22,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     marginBottom: 6,
   },
   meta: {
@@ -79,6 +84,8 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 11,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    letterSpacing: 0.3,
     fontVariant: ['tabular-nums'],
   },
   unsyncedDot: {
