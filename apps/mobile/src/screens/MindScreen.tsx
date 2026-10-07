@@ -14,12 +14,14 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { GestureDetector } from 'react-native-gesture-handler'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { Ionicons } from '@expo/vector-icons'
 import Svg, { Line } from 'react-native-svg'
 import { RootStackParamList } from '../../App'
 import { useThemeStore, getThemeColors } from '../store/themeStore'
 import { apiFetch } from '../lib/api'
+import { useSwipeLeft } from '../lib/useSwipeLeft'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Mind'>
 type Tab = 'map' | 'chat'
@@ -52,12 +54,14 @@ function snippet(text: string, max = 42): string {
   return clean.length > max ? clean.slice(0, max - 1) + '…' : clean
 }
 
-export default function MindScreen({ navigation }: Props) {
+export default function MindScreen({ navigation, route }: Props) {
   const theme = useThemeStore((s) => s.theme)
   const colors = getThemeColors(theme)
-  const [tab, setTab] = useState<Tab>('map')
+  const initialTab: Tab = route.params?.tab ?? 'map'
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [tabWidth, setTabWidth] = useState(0)
-  const indicator = useRef(new Animated.Value(0)).current
+  const indicator = useRef(new Animated.Value(initialTab === 'map' ? 0 : 1)).current
+  const swipeTabs = useSwipeLeft(() => setTab((t) => (t === 'map' ? 'chat' : 'map')))
 
   useEffect(() => {
     Animated.spring(indicator, {
@@ -107,7 +111,16 @@ export default function MindScreen({ navigation }: Props) {
         ))}
       </View>
 
-      {tab === 'map' ? <MapPane navigation={navigation} colors={colors} /> : <ChatPane colors={colors} />}
+      <GestureDetector gesture={swipeTabs}>
+        <View style={styles.root}>
+          <View style={[styles.root, tab !== 'map' && styles.hidden]}>
+            <MapPane navigation={navigation} colors={colors} />
+          </View>
+          <View style={[styles.root, tab !== 'chat' && styles.hidden]}>
+            <ChatPane colors={colors} />
+          </View>
+        </View>
+      </GestureDetector>
     </SafeAreaView>
   )
 }
@@ -391,6 +404,7 @@ function ChatPane({ colors }: { colors: ReturnType<typeof getThemeColors> }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  hidden: { display: 'none' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

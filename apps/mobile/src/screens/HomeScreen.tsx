@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { GestureDetector } from 'react-native-gesture-handler'
 import NetInfo from '@react-native-community/netinfo'
 import { Ionicons } from '@expo/vector-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -21,6 +22,7 @@ import { useThemeStore, getThemeColors } from '../store/themeStore'
 import CaptureCard from '../components/CaptureCard'
 import ThoughtRow from '../components/ThoughtRow'
 import { useAuthStore } from '../store/authStore'
+import { useSwipeLeft } from '../lib/useSwipeLeft'
 import type { Thought } from '../types'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>
@@ -107,149 +109,153 @@ export default function HomeScreen({ navigation }: Props) {
     setSelectedIds(new Set())
   }
 
+  const swipeToChat = useSwipeLeft(() => navigation.navigate('Mind', { tab: 'chat' }), !selectionMode)
+
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={styles.header}>
-        <Pressable onPress={toggleTheme} style={styles.headerTitleContainer}>
-          <Image 
-            source={require('../../assets/logo_thinkollect.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={[styles.title, { color: colors.text }]}>Thinkollect</Text>
-          {totalCount > 0 && (
-            <Text style={[styles.counter, { color: colors.textDim }]}>{totalCount}</Text>
-          )}
-        </Pressable>
-        <Pressable onPress={() => navigation.navigate('Mind')} style={styles.mindBtn} accessibilityLabel="Open mind map">
-          <Ionicons name="git-network-outline" size={20} color={colors.insight} />
-        </Pressable>
-      </View>
-
-      <CaptureCard />
-
-      {thoughts.length > 0 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
-
-      <FlatList
-        data={thoughts}
-        renderItem={renderThought}
-        keyExtractor={item => item.id}
-        style={styles.list}
-        contentContainerStyle={thoughts.length === 0 ? styles.emptyContainer : undefined}
-        keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={
-          <Text style={[styles.empty, { color: colors.textMuted }]}>
-            no thoughts yet.{'\n'}dump your first one.
-          </Text>
-        }
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Selection Mode Bottom Bar */}
-      {selectionMode && (
-        <View style={[styles.selectionBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-          <Pressable onPress={cancelSelection} style={styles.selectionBtn}>
-            <Text style={{ color: colors.text, fontSize: 13 }}>Cancel</Text>
+    <GestureDetector gesture={swipeToChat}>
+      <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
+        <View style={styles.header}>
+          <Pressable onPress={toggleTheme} style={styles.headerTitleContainer}>
+            <Image 
+              source={require('../../assets/logo_thinkollect.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={[styles.title, { color: colors.text }]}>Thinkollect</Text>
+            {totalCount > 0 && (
+              <Text style={[styles.counter, { color: colors.textDim }]}>{totalCount}</Text>
+            )}
           </Pressable>
-            <Text style={{ color: colors.text, fontWeight: '500', fontSize: 13 }}>
-              {selectedIds.size} Selected
-            </Text>
-          <Pressable onPress={deleteSelected} style={styles.selectionBtn} disabled={selectedIds.size === 0}>
-            <Text style={{ color: selectedIds.size > 0 ? colors.danger : colors.textMuted, fontWeight: '500', fontSize: 13 }}>Delete</Text>
+          <Pressable onPress={() => navigation.navigate('Mind')} style={styles.mindBtn} accessibilityLabel="Open mind map">
+            <Ionicons name="git-network-outline" size={20} color={colors.insight} />
           </Pressable>
         </View>
-      )}
 
-      {/* Settings FAB */}
-      {!selectionMode && (
-        <Pressable 
-          style={[styles.fab, { backgroundColor: colors.card, borderColor: colors.border }]} 
-          onPress={() => setSettingsVisible(true)}
-        >
-          <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
-        </Pressable>
-      )}
+        <CaptureCard />
 
-      {/* Settings Modal */}
-      <Modal visible={settingsVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Settings</Text>
-            
-            <Pressable 
-              style={[styles.modalOption, { borderBottomColor: colors.border }]}
-              onPress={() => {
-                setSettingsVisible(false)
-                setSelectionMode(true)
-              }}
-            >
-              <Ionicons name="create-outline" size={18} color={colors.text} />
-              <Text style={[styles.modalOptionText, { color: colors.text }]}>Edit Thoughts</Text>
-            </Pressable>
+        {thoughts.length > 0 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
 
-            <Pressable 
-              style={[styles.modalOption, { borderBottomColor: colors.border }]}
-              onPress={() => {
-                setSettingsVisible(false)
-                navigation.navigate('Mind')
-              }}
-            >
-              <Ionicons name="git-network-outline" size={18} color={colors.text} />
-              <Text style={[styles.modalOptionText, { color: colors.text }]}>Mind</Text>
-            </Pressable>
-
-            <Pressable 
-              style={[styles.modalOption, { borderBottomColor: colors.border }]}
-              onPress={() => {
-                setSettingsVisible(false)
-                triggerSync()
-              }}
-            >
-              <Ionicons name="sync-outline" size={18} color={colors.text} />
-              <Text style={[styles.modalOptionText, { color: colors.text }]}>Sync Now</Text>
-            </Pressable>
-
-            <Pressable 
-              style={[styles.modalOption, { borderBottomColor: colors.border }]}
-              onPress={() => {
-                setSettingsVisible(false)
-                useAuthStore.getState().logout()
-              }}
-            >
-              <Ionicons name="log-out-outline" size={18} color={colors.text} />
-              <Text style={[styles.modalOptionText, { color: colors.text }]}>Log Out</Text>
-            </Pressable>
-
-            <Pressable 
-              style={styles.modalCloseBtn}
-              onPress={() => setSettingsVisible(false)}
-            >
-              <Text style={{ color: colors.tint, fontWeight: '500', fontSize: 14 }}>Close</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Coming Soon Modal */}
-      <Modal visible={comingSoonVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg, borderColor: colors.border, alignItems: 'center', padding: 32 }]}>
-            <Ionicons name="construct-outline" size={36} color={colors.tint} style={{ marginBottom: 12 }} />
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Coming Soon</Text>
-            <Text style={{ color: colors.textMuted, textAlign: 'center', marginBottom: 24, marginTop: 8 }}>
-              This feature is under construction and will be available in a future update.
+        <FlatList
+          data={thoughts}
+          renderItem={renderThought}
+          keyExtractor={item => item.id}
+          style={styles.list}
+          contentContainerStyle={thoughts.length === 0 ? styles.emptyContainer : undefined}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <Text style={[styles.empty, { color: colors.textMuted }]}>
+              no thoughts yet.{'\n'}dump your first one.
             </Text>
-            <Pressable 
-              style={[styles.dumpBtn, { backgroundColor: colors.tint, borderWidth: 0 }]}
-              onPress={() => setComingSoonVisible(false)}
-            >
-              <Text style={{ color: colors.onTint, fontWeight: '500', fontSize: 13 }}>Got it</Text>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Selection Mode Bottom Bar */}
+        {selectionMode && (
+          <View style={[styles.selectionBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+            <Pressable onPress={cancelSelection} style={styles.selectionBtn}>
+              <Text style={{ color: colors.text, fontSize: 13 }}>Cancel</Text>
+            </Pressable>
+              <Text style={{ color: colors.text, fontWeight: '500', fontSize: 13 }}>
+                {selectedIds.size} Selected
+              </Text>
+            <Pressable onPress={deleteSelected} style={styles.selectionBtn} disabled={selectedIds.size === 0}>
+              <Text style={{ color: selectedIds.size > 0 ? colors.danger : colors.textMuted, fontWeight: '500', fontSize: 13 }}>Delete</Text>
             </Pressable>
           </View>
-        </View>
-      </Modal>
+        )}
 
-    </SafeAreaView>
+        {/* Settings FAB */}
+        {!selectionMode && (
+          <Pressable 
+            style={[styles.fab, { backgroundColor: colors.card, borderColor: colors.border }]} 
+            onPress={() => setSettingsVisible(true)}
+          >
+            <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
+          </Pressable>
+        )}
+
+        {/* Settings Modal */}
+        <Modal visible={settingsVisible} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Settings</Text>
+              
+              <Pressable 
+                style={[styles.modalOption, { borderBottomColor: colors.border }]}
+                onPress={() => {
+                  setSettingsVisible(false)
+                  setSelectionMode(true)
+                }}
+              >
+                <Ionicons name="create-outline" size={18} color={colors.text} />
+                <Text style={[styles.modalOptionText, { color: colors.text }]}>Edit Thoughts</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.modalOption, { borderBottomColor: colors.border }]}
+                onPress={() => {
+                  setSettingsVisible(false)
+                  navigation.navigate('Mind')
+                }}
+              >
+                <Ionicons name="git-network-outline" size={18} color={colors.text} />
+                <Text style={[styles.modalOptionText, { color: colors.text }]}>Mind</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.modalOption, { borderBottomColor: colors.border }]}
+                onPress={() => {
+                  setSettingsVisible(false)
+                  triggerSync()
+                }}
+              >
+                <Ionicons name="sync-outline" size={18} color={colors.text} />
+                <Text style={[styles.modalOptionText, { color: colors.text }]}>Sync Now</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.modalOption, { borderBottomColor: colors.border }]}
+                onPress={() => {
+                  setSettingsVisible(false)
+                  useAuthStore.getState().logout()
+                }}
+              >
+                <Ionicons name="log-out-outline" size={18} color={colors.text} />
+                <Text style={[styles.modalOptionText, { color: colors.text }]}>Log Out</Text>
+              </Pressable>
+
+              <Pressable 
+                style={styles.modalCloseBtn}
+                onPress={() => setSettingsVisible(false)}
+              >
+                <Text style={{ color: colors.tint, fontWeight: '500', fontSize: 14 }}>Close</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Coming Soon Modal */}
+        <Modal visible={comingSoonVisible} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.bg, borderColor: colors.border, alignItems: 'center', padding: 32 }]}>
+              <Ionicons name="construct-outline" size={36} color={colors.tint} style={{ marginBottom: 12 }} />
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Coming Soon</Text>
+              <Text style={{ color: colors.textMuted, textAlign: 'center', marginBottom: 24, marginTop: 8 }}>
+                This feature is under construction and will be available in a future update.
+              </Text>
+              <Pressable 
+                style={[styles.dumpBtn, { backgroundColor: colors.tint, borderWidth: 0 }]}
+                onPress={() => setComingSoonVisible(false)}
+              >
+                <Text style={{ color: colors.onTint, fontWeight: '500', fontSize: 13 }}>Got it</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
+      </SafeAreaView>
+    </GestureDetector>
   )
 }
 

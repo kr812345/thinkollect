@@ -16,7 +16,7 @@ import { useAuthStore } from './src/store/authStore'
 export type RootStackParamList = {
   Home: undefined
   Detail: { id: string }
-  Mind: undefined
+  Mind: { tab?: 'map' | 'chat' } | undefined
 }
 
 export type AuthStackParamList = {
