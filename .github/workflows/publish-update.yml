@@ -31,6 +31,13 @@ jobs:
         working-directory: ./apps/mobile
         run: npm install
 
+      - name: Extract Env from eas.json
+        working-directory: ./apps/mobile
+        run: |
+          jq -r '.build.preview.env | to_entries | map("\(.key)=\(.value)") | .[]' eas.json > .env
+          echo "Created .env file for update:"
+          cat .env
+
       - name: Publish update
         working-directory: ./apps/mobile
         run: eas update --auto --non-interactive
