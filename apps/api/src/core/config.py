@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # --- Auth (custom JWT, signed by this backend) ---
     JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
-    TOKEN_EXPIRY_MINUTES: int = 60 * 24 * 7  # 7 days
+    TOKEN_EXPIRY_MINUTES: int = 60 * 24 * 30  # 30 days
 
     # --- Embeddings ---
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"

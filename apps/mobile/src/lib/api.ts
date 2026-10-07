@@ -23,5 +23,9 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
   if (token) {
     Object.assign(headers, authHeaders(token))
   }
-  return fetch(`${apiUrl()}${path}`, { ...init, headers })
+  const res = await fetch(`${apiUrl()}${path}`, { ...init, headers })
+  if (res.status === 401 && token && getSessionToken() === token) {
+    useAuthStore.getState().logout()
+  }
+  return res
 }
